@@ -31,8 +31,10 @@ public class Client {
             for (; ; ) {
                 System.out.println("Enter equation (or 'exit'): ");
                 String usr_inp = cin.nextLine();
-                if (usr_inp == null || "exit".equalsIgnoreCase(usr_inp))
+                if (usr_inp == null || "exit".equalsIgnoreCase(usr_inp)) {
+                    os.println("exit");
                     break;
+                }
                 os.println(usr_inp);
                 log_.leave_message(new RequestMessage(usr_inp));
 

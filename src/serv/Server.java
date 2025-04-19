@@ -40,6 +40,7 @@ public class Server {
 
             @Override
             public void run() {
+                var expr_acc = new StringBuilder();
                 try (var os  = new PrintWriter(socket.getOutputStream(), true);
                      var is = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                      var js = JShell.create()){
@@ -61,17 +62,14 @@ public class Server {
                     });
 
                     String expression;
-                    while ((expression = is.readLine()) != null) {
-                        logger.leave_message(new RequestMessage(expression));
-                        var evs = js.eval(expression);
-                        if (evs.isEmpty()) {
-                            os.println("OK");
-                            logger.leave_message(new ResponseMessage("OK"));
-                        }
+                    while (true) {
+                        var expr = is.readLine();
+                        if ("exit".equals(expr))
+                            return;
+                        expr_acc.append(expr);
+                        logger.leave_message(new RequestMessage(expr));
+                        js.eval(expr_acc.toString());
                     }
-                    String result = "foo";
-                    os.println(result);
-                    logger.leave_message(new ResponseMessage(result));
                 } catch (IOException err) {
                    System.err.printf("Exception caught: %s%n",  err);
                 }
