@@ -1,7 +1,7 @@
 package serv;
 
-import com.sun.net.httpserver.Request;
 import jdk.jshell.JShell;
+import jdk.jshell.Snippet;
 import log.Logger;
 import log.msg.CommonMessage;
 import log.msg.RequestMessage;
@@ -10,7 +10,7 @@ import log.msg.ResponseMessage;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Properties;
+import java.util.Scanner;
 
 public class Server {
     public int port;
@@ -44,8 +44,31 @@ public class Server {
                      var is = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                      var js = JShell.create()){
                     logger.leave_message(new CommonMessage("Listener is running..."));
-                    String expression = is.readLine();
-                    logger.leave_message(new RequestMessage(expression));
+                    js.onSnippetEvent(snip -> {
+                        if (snip.status() == Snippet.Status.VALID) {
+                            if (snip.value() != null && !snip.value().isEmpty()) {
+                                os.println(snip.value());
+                                logger.leave_message(new ResponseMessage(snip.value()));
+                            } else {
+                                os.println("OK");
+                                logger.leave_message(new ResponseMessage("OK"));
+                            }
+                        } else {
+                            var resp = String.format("Error: %s", snip.status());
+                            os.println(resp);
+                            logger.leave_message(new ResponseMessage(resp));
+                        }
+                    });
+
+                    String expression;
+                    while ((expression = is.readLine()) != null) {
+                        logger.leave_message(new RequestMessage(expression));
+                        var evs = js.eval(expression);
+                        if (evs.isEmpty()) {
+                            os.println("OK");
+                            logger.leave_message(new ResponseMessage("OK"));
+                        }
+                    }
                     String result = "foo";
                     os.println(result);
                     logger.leave_message(new ResponseMessage(result));
@@ -68,5 +91,14 @@ public class Server {
     }
 
     public static void main(String[] args) {
+        var scanner = new Scanner(System.in);
+        System.out.println("Enter log filename: ");
+        var log_filename = scanner.nextLine();
+        try (var lgr = new Logger(log_filename)) {
+            var srv = new Server(lgr, Integer.parseInt(args[0]), "127.0.0.1");
+            srv.go();
+        } catch (Exception err) {
+            err.printStackTrace(System.err);
+        }
     }
 }

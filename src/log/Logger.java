@@ -10,15 +10,14 @@ public class Logger implements AutoCloseable {
     public Logger(String filename) throws FileNotFoundException {
         pw_ = new PrintWriter(filename);
     }
-    public Logger(PrintWriter pw) {
-        pw_ = pw;
-    }
     public void leave_message(LogMessage msg) {
+        System.out.println(msg.what());
         pw_.println(msg.what());
+        pw_.flush();
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         pw_.close();
     }
 }

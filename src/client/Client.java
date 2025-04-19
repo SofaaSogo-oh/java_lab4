@@ -9,11 +9,8 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Properties;
 import java.util.Scanner;
-import java.util.function.Consumer;
 
 public class Client {
-    static String filename = "client.conf";
-    static final int CLIENT_COUNT = 3;
     public final Integer port;
     public final String host;
     Logger log_;
@@ -53,23 +50,22 @@ public class Client {
     }
 
     public static void main(String []args) {
-        int port;
-        String host;
-        try (var fr = new FileReader(filename)) {
+        try (var fr = new FileReader("client.conf")) {
             var props = new Properties();
             props.load(fr);
-            port = Integer.parseInt(props.getProperty("PORT"));
-            host = props.getProperty("HOST");
+            var port = Integer.parseInt(props.getProperty("PORT"));
+            var host = props.getProperty("HOST");
+            var scanner = new Scanner(System.in);
+            System.out.println("Enter the log filename: ");
+            var log_filename = scanner.nextLine();
+            try (var logger = new Logger(log_filename)) {
+                var client = new Client(logger, port, host);
+                client.run();
+            } catch (Exception err) {
+                err.printStackTrace(System.err);
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
-        }
-        try (var logger = new Logger("client.conf")) {
-            for (int i = 0; i < CLIENT_COUNT; ++i) {
-                var client = new Client(logger, port, host);
-
-            }
-        } catch (Exception err) {
-            err.printStackTrace(System.err);
         }
     }
 }
